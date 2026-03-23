@@ -1,0 +1,1758 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>orlobx — roblox audio bypasser</title>
+<link href="https://fonts.googleapis.com/css2?family=Geist+Mono:wght@300;400;500;600;700&family=Geist:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+/* ─── RESET & BASE ─────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg:       #0a0a0a;
+  --bg1:      #111111;
+  --bg2:      #161616;
+  --bg3:      #1c1c1c;
+  --line:     #222222;
+  --line2:    #2e2e2e;
+  --line3:    #3a3a3a;
+  --txt:      #f0f0f0;
+  --txt2:     #888888;
+  --txt3:     #444444;
+  --white:    #ffffff;
+  --acc:      #ffffff;
+  --err:      #ff4d4d;
+  --ok:       #4dff91;
+  --warn:     #ffb84d;
+  --r: 10px;
+  --r2: 14px;
+}
+
+body {
+  font-family: 'Geist', sans-serif;
+  background: var(--bg);
+  color: var(--txt);
+  min-height: 100vh;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ─── LOCK SCREEN ──────────────────────────────────────── */
+#lock {
+  position: fixed; inset: 0;
+  background: var(--bg);
+  z-index: 999;
+  display: flex; align-items: center; justify-content: center;
+}
+
+.lock-card {
+  width: 360px; max-width: 92vw;
+}
+
+.lock-logo {
+  display: flex; align-items: center; gap: 10px;
+  margin-bottom: 40px;
+}
+.lock-dot {
+  width: 28px; height: 28px; border-radius: 6px;
+  background: var(--white);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 13px;
+}
+.lock-brand {
+  font-size: 14px; font-weight: 700; letter-spacing: -.3px;
+}
+
+.lock-h {
+  font-size: 36px; font-weight: 800;
+  letter-spacing: -1.5px; line-height: 1;
+  margin-bottom: 10px;
+}
+.lock-h span { color: var(--txt3); }
+
+.lock-sub {
+  font-size: 12px; color: var(--txt2);
+  line-height: 1.6; margin-bottom: 32px;
+}
+
+.field-label {
+  font-family: 'Geist Mono', monospace;
+  font-size: 9px; letter-spacing: 2px; text-transform: uppercase;
+  color: var(--txt3); margin-bottom: 8px; display: block;
+}
+
+.lock-row { display: flex; gap: 8px; margin-bottom: 10px; }
+
+.lock-inp {
+  flex: 1;
+  background: var(--bg2);
+  border: 1px solid var(--line2);
+  border-radius: var(--r);
+  padding: 12px 14px;
+  font-family: 'Geist Mono', monospace;
+  font-size: 18px; letter-spacing: 10px;
+  color: var(--white); outline: none;
+  transition: border-color .15s;
+}
+.lock-inp:focus { border-color: var(--line3); }
+.lock-inp.bad {
+  border-color: var(--err);
+  animation: shk .3s ease;
+}
+@keyframes shk {
+  0%,100%{transform:translateX(0)}
+  25%{transform:translateX(-6px)}
+  75%{transform:translateX(6px)}
+}
+
+.lock-go {
+  background: var(--white);
+  border: none; border-radius: var(--r);
+  padding: 12px 16px;
+  font-family: 'Geist', sans-serif;
+  font-size: 13px; font-weight: 600;
+  color: #000; cursor: pointer;
+  transition: opacity .15s, transform .1s;
+  white-space: nowrap;
+}
+.lock-go:hover { opacity: .85; }
+.lock-go:active { transform: scale(.97); }
+
+.lock-err-msg {
+  font-family: 'Geist Mono', monospace;
+  font-size: 10px; color: var(--err);
+  height: 14px; margin-top: 4px;
+}
+
+/* ─── APP SHELL ────────────────────────────────────────── */
+#app { display: none; }
+
+/* ─── TOPBAR ───────────────────────────────────────────── */
+.topbar {
+  height: 52px;
+  border-bottom: 1px solid var(--line);
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 24px;
+  background: var(--bg);
+  position: sticky; top: 0; z-index: 50;
+}
+
+.tb-logo {
+  display: flex; align-items: center; gap: 9px;
+  font-size: 14px; font-weight: 700; letter-spacing: -.3px;
+}
+.tb-dot {
+  width: 24px; height: 24px; border-radius: 5px;
+  background: var(--white);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px;
+}
+
+.tb-nav {
+  display: flex; align-items: center; gap: 2px;
+}
+.tb-tab {
+  padding: 6px 14px;
+  border-radius: 8px;
+  font-size: 12px; font-weight: 500;
+  color: var(--txt2);
+  cursor: pointer;
+  border: none; background: transparent;
+  transition: color .15s, background .15s;
+  font-family: 'Geist', sans-serif;
+  position: relative;
+}
+.tb-tab:hover { color: var(--txt); background: var(--bg2); }
+.tb-tab.active { color: var(--white); background: var(--bg2); }
+.tb-tab .count {
+  position: absolute; top: 3px; right: 3px;
+  min-width: 14px; height: 14px;
+  background: var(--white);
+  border-radius: 100px;
+  font-size: 7px; font-weight: 700;
+  color: #000;
+  display: flex; align-items: center; justify-content: center;
+  padding: 0 3px;
+}
+
+.tb-right { display: flex; align-items: center; gap: 8px; }
+
+.tb-status {
+  font-family: 'Geist Mono', monospace;
+  font-size: 9px; letter-spacing: 1px; text-transform: uppercase;
+  color: var(--txt3);
+  display: flex; align-items: center; gap: 6px;
+}
+.tb-status.ok { color: var(--ok); }
+.tb-status::before {
+  content: '';
+  width: 5px; height: 5px; border-radius: 50%;
+  background: currentColor;
+}
+
+/* ─── PAGES ────────────────────────────────────────────── */
+.page { display: none; padding: 28px 24px 80px; max-width: 800px; margin: 0 auto; }
+.page.active { display: block; }
+
+/* ─── SECTION HEADER ───────────────────────────────────── */
+.sec {
+  font-family: 'Geist Mono', monospace;
+  font-size: 9px; letter-spacing: 2.5px; text-transform: uppercase;
+  color: var(--txt3); margin-bottom: 12px;
+  display: flex; align-items: center; gap: 10px;
+}
+.sec::after { content: ''; flex: 1; height: 1px; background: var(--line); }
+
+/* ─── CARDS ────────────────────────────────────────────── */
+.card {
+  background: var(--bg1);
+  border: 1px solid var(--line);
+  border-radius: var(--r2);
+  margin-bottom: 12px;
+}
+
+/* ─── DROPZONE ─────────────────────────────────────────── */
+.dz {
+  border: 1px dashed var(--line2);
+  border-radius: var(--r2);
+  padding: 40px 24px;
+  text-align: center;
+  cursor: pointer;
+  position: relative;
+  background: var(--bg1);
+  margin-bottom: 12px;
+  transition: border-color .15s, background .15s;
+}
+.dz:hover, .dz.over { border-color: var(--line3); background: var(--bg2); }
+.dz input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+.dz-icon {
+  width: 40px; height: 40px; border-radius: 10px;
+  background: var(--bg3); border: 1px solid var(--line2);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px; margin: 0 auto 12px;
+  transition: transform .2s;
+}
+.dz:hover .dz-icon { transform: translateY(-2px); }
+.dz-title { font-size: 14px; font-weight: 600; margin-bottom: 4px; }
+.dz-sub { font-size: 11px; color: var(--txt2); }
+.dz-fmts {
+  display: flex; gap: 5px; justify-content: center; margin-top: 12px;
+  flex-wrap: wrap;
+}
+.dz-fmt {
+  font-family: 'Geist Mono', monospace;
+  font-size: 8px; letter-spacing: 1px; text-transform: uppercase;
+  background: var(--bg3); border: 1px solid var(--line);
+  border-radius: 4px; padding: 2px 7px; color: var(--txt3);
+}
+
+/* ─── FILE LIST ────────────────────────────────────────── */
+#file-list { display: flex; flex-direction: column; gap: 6px; margin-bottom: 12px; }
+
+.frow {
+  display: flex; align-items: center; gap: 10px;
+  background: var(--bg1); border: 1px solid var(--line);
+  border-radius: var(--r); padding: 10px 14px;
+  animation: fin .15s ease;
+}
+@keyframes fin { from { opacity:0; transform:translateY(-4px); } to { opacity:1; transform:none; } }
+
+.frow-icon {
+  width: 32px; height: 32px; border-radius: 7px;
+  background: var(--bg3); flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 13px;
+}
+.frow-info { flex: 1; min-width: 0; }
+.frow-name {
+  font-size: 12px; font-weight: 500;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.frow-meta {
+  font-family: 'Geist Mono', monospace;
+  font-size: 9px; color: var(--txt3); margin-top: 2px;
+  display: flex; gap: 8px;
+}
+
+.frow-bar {
+  width: 64px; height: 2px;
+  background: var(--line); border-radius: 2px; overflow: hidden;
+  flex-shrink: 0;
+}
+.frow-bar-fill {
+  height: 100%; width: 0%;
+  background: var(--white); border-radius: 2px;
+  transition: width .3s ease;
+}
+
+.frow-badge {
+  font-family: 'Geist Mono', monospace;
+  font-size: 8px; letter-spacing: 1px; text-transform: uppercase;
+  padding: 3px 7px; border-radius: 5px; flex-shrink: 0;
+}
+.frow-badge.idle  { background: var(--bg3); color: var(--txt3); border: 1px solid var(--line); }
+.frow-badge.proc  { background: rgba(255,255,255,.06); color: var(--txt2); border: 1px solid var(--line2); animation: flicker 1s ease-in-out infinite; }
+.frow-badge.done  { background: rgba(77,255,145,.07); color: var(--ok); border: 1px solid rgba(77,255,145,.2); }
+.frow-badge.uploaded { background: rgba(255,255,255,.08); color: var(--white); border: 1px solid var(--line3); }
+.frow-badge.error { background: rgba(255,77,77,.07); color: var(--err); border: 1px solid rgba(255,77,77,.2); }
+@keyframes flicker { 0%,100%{opacity:1} 50%{opacity:.5} }
+
+.frow-dl, .frow-rm {
+  width: 26px; height: 26px; border-radius: 6px;
+  border: 1px solid var(--line); background: transparent;
+  color: var(--txt3); font-size: 11px;
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0; transition: all .15s;
+}
+.frow-dl:hover { border-color: var(--ok); color: var(--ok); background: rgba(77,255,145,.05); }
+.frow-dl:disabled { opacity: .25; cursor: not-allowed; }
+.frow-rm:hover { border-color: var(--err); color: var(--err); background: rgba(255,77,77,.05); }
+
+/* ─── SETTINGS GRID ────────────────────────────────────── */
+.cfg-grid {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
+  margin-bottom: 12px;
+}
+@media(max-width:580px){ .cfg-grid { grid-template-columns: 1fr; } }
+
+.cfg-card {
+  background: var(--bg1); border: 1px solid var(--line);
+  border-radius: var(--r2); padding: 16px;
+}
+.cfg-head {
+  font-family: 'Geist Mono', monospace;
+  font-size: 8px; letter-spacing: 2px; text-transform: uppercase;
+  color: var(--txt3); margin-bottom: 12px;
+  display: flex; align-items: center; justify-content: space-between;
+}
+.cfg-tag {
+  font-size: 7px; letter-spacing: 1px;
+  background: var(--bg3); border: 1px solid var(--line2);
+  border-radius: 4px; padding: 2px 6px; color: var(--txt2);
+}
+
+/* segmented controls */
+.seg { display: flex; gap: 4px; flex-wrap: wrap; }
+.seg-btn {
+  background: var(--bg2); border: 1px solid var(--line);
+  border-radius: 7px; padding: 7px 12px;
+  font-family: 'Geist Mono', monospace;
+  font-size: 11px; font-weight: 500;
+  color: var(--txt2); cursor: pointer;
+  transition: all .12s;
+}
+.seg-btn:hover { border-color: var(--line3); color: var(--txt); }
+.seg-btn.on {
+  background: var(--white); border-color: var(--white);
+  color: #000; font-weight: 600;
+}
+.seg-btn small { display: block; font-size: 7px; color: inherit; opacity: .6; margin-top: 1px; }
+
+/* toggle rows */
+.tog-row {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 10px;
+}
+.tog-row:last-child { margin-bottom: 0; }
+.tog-label { font-size: 11px; font-weight: 500; }
+.tog-sub { font-size: 9px; color: var(--txt2); margin-top: 1px; }
+
+.tog {
+  width: 36px; height: 20px; border-radius: 100px;
+  background: var(--bg3); border: 1px solid var(--line2);
+  position: relative; cursor: pointer;
+  transition: background .15s, border-color .15s;
+  flex-shrink: 0;
+}
+.tog.on { background: var(--white); border-color: var(--white); }
+.tog::after {
+  content: '';
+  position: absolute; top: 2px; left: 2px;
+  width: 14px; height: 14px; border-radius: 50%;
+  background: var(--txt3);
+  transition: transform .15s, background .15s;
+  box-shadow: 0 1px 3px rgba(0,0,0,.4);
+}
+.tog.on::after { transform: translateX(16px); background: #000; }
+
+/* ─── COOKIE INPUT ─────────────────────────────────────── */
+.cookie-card {
+  background: var(--bg1); border: 1px solid var(--line);
+  border-radius: var(--r2); padding: 16px;
+  margin-bottom: 12px;
+}
+.cookie-head {
+  display: flex; align-items: flex-start; justify-content: space-between;
+  margin-bottom: 12px; gap: 12px;
+}
+.cookie-title { font-size: 13px; font-weight: 600; margin-bottom: 2px; }
+.cookie-desc { font-size: 11px; color: var(--txt2); line-height: 1.5; }
+.cookie-notice {
+  font-family: 'Geist Mono', monospace;
+  font-size: 8px; letter-spacing: 1px; text-transform: uppercase;
+  background: rgba(255,184,77,.06); border: 1px solid rgba(255,184,77,.2);
+  border-radius: 6px; padding: 4px 8px; color: var(--warn);
+  white-space: nowrap; flex-shrink: 0;
+}
+.cookie-row { display: flex; gap: 8px; }
+.cookie-inp {
+  flex: 1;
+  background: var(--bg2); border: 1px solid var(--line2);
+  border-radius: 8px; padding: 9px 12px;
+  font-family: 'Geist Mono', monospace;
+  font-size: 10px; color: var(--txt);
+  outline: none; transition: border-color .15s;
+  overflow: hidden; text-overflow: ellipsis;
+}
+.cookie-inp:focus { border-color: var(--line3); }
+.cookie-inp::placeholder { color: var(--txt3); letter-spacing: 0; }
+.cookie-save {
+  background: var(--bg2); border: 1px solid var(--line2);
+  border-radius: 8px; padding: 9px 14px;
+  font-family: 'Geist Mono', monospace;
+  font-size: 9px; letter-spacing: 1px; text-transform: uppercase;
+  color: var(--txt2); cursor: pointer;
+  transition: all .15s; white-space: nowrap;
+}
+.cookie-save:hover { border-color: var(--line3); color: var(--txt); }
+.cookie-save.saved { border-color: var(--ok); color: var(--ok); }
+.cookie-status {
+  font-family: 'Geist Mono', monospace;
+  font-size: 9px; color: var(--txt3); margin-top: 8px;
+  display: flex; align-items: center; gap: 6px;
+}
+.cookie-status.set { color: var(--ok); }
+.cookie-status::before { content: ''; width: 4px; height: 4px; border-radius: 50%; background: currentColor; }
+
+/* ─── GLOBAL PROGRESS ──────────────────────────────────── */
+.gp {
+  display: none;
+  background: var(--bg1); border: 1px solid var(--line);
+  border-radius: var(--r); padding: 14px 16px;
+  margin-bottom: 12px;
+}
+.gp-top {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-bottom: 8px;
+}
+.gp-label { font-size: 11px; color: var(--txt2); }
+.gp-pct {
+  font-family: 'Geist Mono', monospace;
+  font-size: 10px; color: var(--white); font-weight: 600;
+}
+.gp-bar { height: 2px; background: var(--line); border-radius: 2px; overflow: hidden; }
+.gp-fill {
+  height: 100%; width: 0%;
+  background: var(--white); border-radius: 2px;
+  transition: width .35s ease;
+}
+
+/* ─── ACTION ROW ───────────────────────────────────────── */
+.act-row {
+  display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 8px;
+  margin-bottom: 16px;
+}
+@media(max-width:500px){ .act-row { grid-template-columns: 1fr 1fr; } }
+
+.btn {
+  display: flex; align-items: center; justify-content: center; gap: 7px;
+  border-radius: 9px; padding: 11px 16px;
+  font-family: 'Geist', sans-serif;
+  font-size: 12px; font-weight: 600;
+  cursor: pointer; border: none;
+  transition: opacity .15s, transform .1s, box-shadow .15s;
+}
+.btn:active { transform: scale(.97); }
+.btn:disabled { opacity: .3; cursor: not-allowed; transform: none !important; }
+.btn-primary {
+  background: var(--white); color: #000;
+}
+.btn-primary:hover:not(:disabled) { opacity: .9; box-shadow: 0 0 0 1px rgba(255,255,255,.2); }
+.btn-ghost {
+  background: var(--bg2); border: 1px solid var(--line);
+  color: var(--txt2);
+}
+.btn-ghost:hover:not(:disabled) { border-color: var(--line3); color: var(--txt); }
+.btn-icon { font-size: 13px; }
+
+/* ─── WARN BANNER ──────────────────────────────────────── */
+.warn {
+  display: flex; align-items: flex-start; gap: 10px;
+  background: rgba(255,184,77,.04); border: 1px solid rgba(255,184,77,.15);
+  border-radius: 9px; padding: 12px 14px;
+  font-size: 10px; color: rgba(255,184,77,.7); line-height: 1.6;
+}
+.warn-icon { flex-shrink: 0; margin-top: 1px; }
+
+/* ─── PROFILE PAGE ─────────────────────────────────────── */
+.profile-top {
+  display: flex; align-items: center; gap: 16px;
+  margin-bottom: 28px;
+}
+.profile-avatar {
+  width: 56px; height: 56px; border-radius: 12px;
+  background: var(--bg3); border: 1px solid var(--line2);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 24px; flex-shrink: 0;
+}
+.profile-name {
+  font-size: 20px; font-weight: 700; letter-spacing: -.5px;
+  margin-bottom: 4px;
+}
+.profile-meta {
+  font-family: 'Geist Mono', monospace;
+  font-size: 9px; color: var(--txt3); letter-spacing: 1px;
+}
+
+.stats-row {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px;
+  margin-bottom: 24px;
+}
+.stat-card {
+  background: var(--bg1); border: 1px solid var(--line);
+  border-radius: var(--r); padding: 14px;
+}
+.stat-val {
+  font-size: 24px; font-weight: 800; letter-spacing: -1px;
+  margin-bottom: 2px;
+}
+.stat-label {
+  font-family: 'Geist Mono', monospace;
+  font-size: 8px; letter-spacing: 1.5px; text-transform: uppercase;
+  color: var(--txt3);
+}
+
+/* history list */
+#history-list { display: flex; flex-direction: column; gap: 6px; }
+
+.hist-item {
+  display: flex; align-items: center; gap: 12px;
+  background: var(--bg1); border: 1px solid var(--line);
+  border-radius: var(--r); padding: 12px 14px;
+  transition: border-color .15s;
+}
+.hist-item:hover { border-color: var(--line2); }
+
+.hist-icon {
+  width: 34px; height: 34px; border-radius: 7px;
+  background: var(--bg3); flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 13px;
+}
+.hist-info { flex: 1; min-width: 0; }
+.hist-name {
+  font-size: 12px; font-weight: 500;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  margin-bottom: 3px;
+}
+.hist-meta {
+  font-family: 'Geist Mono', monospace;
+  font-size: 9px; color: var(--txt3);
+  display: flex; gap: 10px; flex-wrap: wrap;
+}
+.hist-id {
+  font-family: 'Geist Mono', monospace;
+  font-size: 10px; color: var(--txt2);
+  background: var(--bg3); border: 1px solid var(--line);
+  border-radius: 6px; padding: 3px 8px;
+  cursor: pointer; transition: all .12s; white-space: nowrap;
+  flex-shrink: 0;
+}
+.hist-id:hover { border-color: var(--line3); color: var(--white); }
+.hist-reupload {
+  width: 28px; height: 28px; border-radius: 6px;
+  background: transparent; border: 1px solid var(--line);
+  color: var(--txt3); font-size: 11px;
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0; transition: all .15s;
+}
+.hist-reupload:hover { border-color: var(--white); color: var(--white); }
+
+.empty-state {
+  text-align: center; padding: 48px 24px;
+  color: var(--txt3);
+}
+.empty-icon { font-size: 28px; margin-bottom: 10px; }
+.empty-label {
+  font-family: 'Geist Mono', monospace;
+  font-size: 10px; letter-spacing: 1px; text-transform: uppercase;
+}
+
+/* ─── TOAST ────────────────────────────────────────────── */
+#toast {
+  position: fixed; bottom: 20px; right: 20px;
+  background: var(--bg2); border-radius: 9px;
+  padding: 10px 16px; font-size: 11px; font-weight: 500;
+  z-index: 9999;
+  transform: translateY(60px); opacity: 0;
+  transition: all .25s cubic-bezier(.34,1.56,.64,1);
+  display: flex; align-items: center; gap: 8px;
+  max-width: 300px;
+  box-shadow: 0 8px 32px rgba(0,0,0,.5);
+}
+#toast.ok  { border: 1px solid rgba(77,255,145,.25); color: var(--ok); }
+#toast.err { border: 1px solid rgba(255,77,77,.25);  color: var(--err); }
+#toast.inf { border: 1px solid var(--line2);          color: var(--txt2); }
+#toast.show { transform: translateY(0); opacity: 1; }
+
+/* ─── TOPBAR ACCOUNT BUTTON ────────────────────────────── */
+.tb-acct-btn {
+  display: flex; align-items: center; gap: 7px;
+  background: var(--bg2); border: 1px solid var(--line2);
+  border-radius: 8px; padding: 6px 12px;
+  font-family: 'Geist', sans-serif;
+  font-size: 11px; font-weight: 500;
+  color: var(--txt2); cursor: pointer;
+  transition: all .15s;
+}
+.tb-acct-btn:hover { border-color: var(--line3); color: var(--txt); }
+.tb-acct-btn.connected { border-color: var(--ok); color: var(--ok); background: rgba(77,255,145,.05); }
+
+.tb-acct-avatar {
+  width: 20px; height: 20px; border-radius: 50%;
+  overflow: hidden; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 13px;
+}
+.tb-acct-avatar img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; }
+
+/* ─── UPLOAD BUTTON ────────────────────────────────────── */
+.btn-upload {
+  background: var(--bg2); border: 1px solid var(--line2);
+  color: var(--txt2);
+  grid-column: 1 / -1;
+}
+.btn-upload:hover:not(:disabled) { border-color: var(--ok); color: var(--ok); background: rgba(77,255,145,.05); }
+.btn-upload.has-account { border-color: rgba(77,255,145,.3); color: var(--ok); }
+.btn-upload.has-account:hover:not(:disabled) { background: rgba(77,255,145,.08); }
+
+/* ─── MODAL OVERLAY ────────────────────────────────────── */
+.modal-overlay {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,.75);
+  backdrop-filter: blur(4px);
+  z-index: 500;
+  display: flex; align-items: center; justify-content: center;
+  opacity: 0; pointer-events: none;
+  transition: opacity .2s;
+}
+.modal-overlay.open { opacity: 1; pointer-events: all; }
+
+.modal {
+  background: var(--bg1);
+  border: 1px solid var(--line2);
+  border-radius: 18px;
+  width: 400px; max-width: 94vw;
+  padding: 28px;
+  position: relative;
+  transform: translateY(12px);
+  transition: transform .2s;
+  box-shadow: 0 24px 80px rgba(0,0,0,.6);
+}
+.modal-overlay.open .modal { transform: translateY(0); }
+
+.modal-close {
+  position: absolute; top: 16px; right: 16px;
+  width: 28px; height: 28px; border-radius: 7px;
+  background: var(--bg3); border: 1px solid var(--line);
+  color: var(--txt3); font-size: 14px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: all .12s;
+}
+.modal-close:hover { color: var(--txt); border-color: var(--line2); }
+
+.modal-title {
+  font-size: 16px; font-weight: 700; letter-spacing: -.3px;
+  margin-bottom: 4px;
+}
+.modal-sub { font-size: 11px; color: var(--txt2); line-height: 1.5; margin-bottom: 20px; }
+
+/* cookie input in modal */
+.modal-field { margin-bottom: 14px; }
+.modal-inp {
+  width: 100%;
+  background: var(--bg2); border: 1px solid var(--line2);
+  border-radius: 9px; padding: 11px 13px;
+  font-family: 'Geist Mono', monospace;
+  font-size: 10px; color: var(--txt);
+  outline: none; transition: border-color .15s;
+}
+.modal-inp:focus { border-color: var(--line3); }
+.modal-inp::placeholder { color: var(--txt3); }
+
+.modal-btn-row { display: flex; gap: 8px; }
+.modal-btn {
+  flex: 1; padding: 11px;
+  border-radius: 9px; font-family: 'Geist', sans-serif;
+  font-size: 12px; font-weight: 600; cursor: pointer;
+  transition: all .12s; border: none;
+}
+.modal-btn.primary { background: var(--white); color: #000; }
+.modal-btn.primary:hover { opacity: .88; }
+.modal-btn.ghost { background: var(--bg3); border: 1px solid var(--line); color: var(--txt2); }
+.modal-btn.ghost:hover { border-color: var(--line2); color: var(--txt); }
+
+/* "Is this you?" confirmation */
+.confirm-card {
+  display: none;
+  background: var(--bg2); border: 1px solid var(--line2);
+  border-radius: 12px; padding: 16px;
+  margin-bottom: 16px;
+  align-items: center; gap: 14px;
+}
+.confirm-card.show { display: flex; }
+.confirm-avatar {
+  width: 52px; height: 52px; border-radius: 50%;
+  overflow: hidden; flex-shrink: 0;
+  background: var(--bg3);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 24px;
+}
+.confirm-avatar img { width: 100%; height: 100%; object-fit: cover; }
+.confirm-name { font-size: 15px; font-weight: 700; margin-bottom: 2px; }
+.confirm-user { font-family: 'Geist Mono', monospace; font-size: 10px; color: var(--txt3); }
+.confirm-q { font-size: 11px; color: var(--txt2); margin-top: 5px; }
+
+.modal-err {
+  font-family: 'Geist Mono', monospace;
+  font-size: 9px; color: var(--err);
+  margin-top: 8px; min-height: 13px;
+}
+
+/* connected state in modal */
+.connected-view {
+  display: none;
+}
+.connected-view.show { display: block; }
+.connected-user {
+  display: flex; align-items: center; gap: 12px;
+  background: var(--bg2); border: 1px solid rgba(77,255,145,.2);
+  border-radius: 12px; padding: 14px;
+  margin-bottom: 16px;
+}
+.connected-user-avatar {
+  width: 44px; height: 44px; border-radius: 50%;
+  overflow: hidden; background: var(--bg3);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 20px; flex-shrink: 0;
+}
+.connected-user-avatar img { width: 100%; height: 100%; object-fit: cover; }
+.connected-name { font-size: 14px; font-weight: 700; margin-bottom: 2px; }
+.connected-handle { font-family: 'Geist Mono', monospace; font-size: 9px; color: var(--txt3); }
+.connected-badge {
+  margin-left: auto; flex-shrink: 0;
+  font-family: 'Geist Mono', monospace;
+  font-size: 8px; letter-spacing: 1px; text-transform: uppercase;
+  background: rgba(77,255,145,.1); border: 1px solid rgba(77,255,145,.25);
+  border-radius: 6px; padding: 4px 8px; color: var(--ok);
+}
+
+/* ─── RESPONSIVE ───────────────────────────────────────── */
+@media(max-width:500px){
+  .topbar { padding: 0 14px; }
+  .page   { padding: 20px 14px 60px; }
+  .stats-row { grid-template-columns: 1fr 1fr; }
+  .tb-acct-btn span:last-child { display: none; }
+}
+</style>
+</head>
+<body>
+
+<!-- ══════════ LOCK ══════════ -->
+<div id="lock">
+  <div class="lock-card">
+    <div class="lock-logo">
+      <div class="lock-dot">🎵</div>
+      <span class="lock-brand">orlobx</span>
+    </div>
+    <h1 class="lock-h">enter<br><span>access key</span></h1>
+    <p class="lock-sub">your audio processing suite for roblox.<br>enter your key to continue.</p>
+    <label class="field-label">access key</label>
+    <div class="lock-row">
+      <input class="lock-inp" id="pw-in" type="password" placeholder="••••" maxlength="40" autocomplete="off">
+      <button class="lock-go" onclick="unlock()">unlock</button>
+    </div>
+    <div class="lock-err-msg" id="pw-err"></div>
+  </div>
+</div>
+
+<!-- ══════════ APP ══════════ -->
+<div id="app">
+
+  <!-- topbar -->
+  <div class="topbar">
+    <div class="tb-logo">
+      <div class="tb-dot">🎵</div>
+      orlobx
+    </div>
+    <div class="tb-nav">
+      <button class="tb-tab active" id="tab-bypass" onclick="showPage('bypass')">bypass</button>
+      <button class="tb-tab" id="tab-profile" onclick="showPage('profile')">
+        profile
+        <span class="count" id="history-count" style="display:none"></span>
+      </button>
+    </div>
+    <div class="tb-right">
+      <div class="tb-status" id="engine-status">ready</div>
+      <button class="tb-acct-btn" id="tb-acct-btn" onclick="openAccountModal()">
+        <span id="tb-acct-avatar" class="tb-acct-avatar">👤</span>
+        <span id="tb-acct-label">connect account</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- ── BYPASS PAGE ── -->
+  <div class="page active" id="page-bypass">
+
+    <div class="sec">upload audio</div>
+
+    <div class="dz" id="dz">
+      <input type="file" id="file-in" accept=".mp3,.wav,.ogg,.flac,.aac,.m4a" multiple>
+      <div class="dz-icon">⬆</div>
+      <div class="dz-title">drag & drop audio files</div>
+      <div class="dz-sub">or click to browse</div>
+      <div class="dz-fmts">
+        <span class="dz-fmt">mp3</span><span class="dz-fmt">wav</span>
+        <span class="dz-fmt">ogg</span><span class="dz-fmt">flac</span>
+        <span class="dz-fmt">aac</span><span class="dz-fmt">m4a</span>
+      </div>
+    </div>
+
+    <div id="file-list"></div>
+
+    <!-- settings -->
+    <div class="sec">processing</div>
+    <div class="cfg-grid">
+
+      <div class="cfg-card">
+        <div class="cfg-head">bypass ratio <span class="cfg-tag">key</span></div>
+        <div class="seg">
+          <button class="seg-btn on" data-r="2.5" onclick="setRatio(this)">×2.5<small>standard</small></button>
+          <button class="seg-btn" data-r="2.0" onclick="setRatio(this)">×2.0</button>
+          <button class="seg-btn" data-r="1.5" onclick="setRatio(this)">×1.5</button>
+          <button class="seg-btn" data-r="3.0" onclick="setRatio(this)">×3.0</button>
+        </div>
+      </div>
+
+      <div class="cfg-card">
+        <div class="cfg-head">output quality</div>
+        <div class="seg">
+          <button class="seg-btn" data-q="128" onclick="setQ(this)">128k</button>
+          <button class="seg-btn on" data-q="192" onclick="setQ(this)">192k</button>
+          <button class="seg-btn" data-q="320" onclick="setQ(this)">320k</button>
+        </div>
+      </div>
+
+      <div class="cfg-card">
+        <div class="cfg-head">audio processing</div>
+        <div class="tog-row">
+          <div><div class="tog-label">speed + pitch up</div><div class="tog-sub">compensates roblox slowdown</div></div>
+          <div class="tog on" id="t-sp" onclick="this.classList.toggle('on')"></div>
+        </div>
+        <div class="tog-row">
+          <div><div class="tog-label">+10 dB boost</div><div class="tog-sub">compensates roblox compression</div></div>
+          <div class="tog on" id="t-boost" onclick="this.classList.toggle('on')"></div>
+        </div>
+      </div>
+
+      <div class="cfg-card">
+        <div class="cfg-head">export</div>
+        <div class="tog-row">
+          <div><div class="tog-label">normalize</div><div class="tog-sub">balanced peak loudness</div></div>
+          <div class="tog on" id="t-norm" onclick="this.classList.toggle('on')"></div>
+        </div>
+        <div class="tog-row">
+          <div><div class="tog-label">stereo → mono</div><div class="tog-sub">smaller file, roblox-optimized</div></div>
+          <div class="tog on" id="t-mono" onclick="this.classList.toggle('on')"></div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- progress -->
+    <div class="gp" id="gp">
+      <div class="gp-top">
+        <span class="gp-label" id="gp-label">processing...</span>
+        <span class="gp-pct" id="gp-pct">0%</span>
+      </div>
+      <div class="gp-bar"><div class="gp-fill" id="gp-fill"></div></div>
+    </div>
+
+    <!-- actions -->
+    <div class="sec">actions</div>
+    <div class="act-row">
+      <button class="btn btn-primary" id="btn-run" onclick="runAll()">
+        <span class="btn-icon">⚡</span> process files
+      </button>
+      <button class="btn btn-ghost" id="btn-prev" onclick="previewFirst()" disabled>
+        <span class="btn-icon">▶</span> preview
+      </button>
+      <button class="btn btn-ghost" id="btn-dl" onclick="dlAll()" disabled>
+        <span class="btn-icon">↓</span> download
+      </button>
+    </div>
+    <div class="act-row" style="margin-top:-4px">
+      <button class="btn btn-upload" id="btn-upload" onclick="uploadAll()" disabled>
+        <span class="btn-icon">↑</span> upload to roblox account
+      </button>
+    </div>
+
+    <div class="warn">
+      <span class="warn-icon">⚠</span>
+      bypass is not guaranteed. not responsible for bans or terminations. use at your own risk.
+    </div>
+
+  </div>
+
+  <!-- ── PROFILE PAGE ── -->
+  <div class="page" id="page-profile">
+
+    <div class="profile-top">
+      <div class="profile-avatar">👤</div>
+      <div>
+        <div class="profile-name">my bypasses</div>
+        <div class="profile-meta" id="profile-meta">loading...</div>
+      </div>
+    </div>
+
+    <div class="stats-row">
+      <div class="stat-card">
+        <div class="stat-val" id="stat-total">0</div>
+        <div class="stat-label">total processed</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-val" id="stat-uploaded">0</div>
+        <div class="stat-label">uploaded</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-val" id="stat-sessions">0</div>
+        <div class="stat-label">sessions</div>
+      </div>
+    </div>
+
+    <div class="sec">bypass history</div>
+    <div id="history-list"></div>
+
+  </div>
+
+</div><!-- /app -->
+
+<!-- ══════════ ACCOUNT MODAL ══════════ -->
+<div class="modal-overlay" id="acct-modal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeAccountModal()">✕</button>
+
+    <!-- INPUT VIEW -->
+    <div id="modal-input-view">
+      <div class="modal-title">connect roblox account</div>
+      <div class="modal-sub">paste your .ROBLOSECURITY cookie below. it's stored locally in your browser and only sent to your own vercel function.</div>
+
+      <div class="modal-field">
+        <label class="field-label">roblosecurity cookie</label>
+        <input class="modal-inp" id="modal-cookie-in" type="password"
+          placeholder="_|WARNING:-DO-NOT-SHARE-THIS..." autocomplete="off">
+        <div class="modal-err" id="modal-err"></div>
+      </div>
+
+      <!-- "Is this you?" confirmation card (shown after lookup) -->
+      <div class="confirm-card" id="confirm-card">
+        <div class="confirm-avatar" id="confirm-avatar">👤</div>
+        <div>
+          <div class="confirm-name" id="confirm-name">—</div>
+          <div class="confirm-user" id="confirm-user">—</div>
+          <div class="confirm-q">is this you?</div>
+        </div>
+      </div>
+
+      <div class="modal-btn-row" id="modal-btns-lookup">
+        <button class="modal-btn ghost" onclick="closeAccountModal()">cancel</button>
+        <button class="modal-btn primary" onclick="lookupCookie()">look up account →</button>
+      </div>
+      <div class="modal-btn-row" id="modal-btns-confirm" style="display:none">
+        <button class="modal-btn ghost" onclick="resetModalToInput()">← back</button>
+        <button class="modal-btn primary" onclick="confirmCookie()">yes, connect account</button>
+      </div>
+    </div>
+
+    <!-- CONNECTED VIEW -->
+    <div class="connected-view" id="modal-connected-view">
+      <div class="modal-title">roblox account</div>
+      <div class="modal-sub" style="margin-bottom:16px">your account is connected. processed audio can be uploaded directly.</div>
+      <div class="connected-user">
+        <div class="connected-user-avatar" id="connected-avatar">👤</div>
+        <div>
+          <div class="connected-name" id="connected-name">—</div>
+          <div class="connected-handle" id="connected-handle">—</div>
+        </div>
+        <div class="connected-badge">connected</div>
+      </div>
+      <div class="modal-btn-row">
+        <button class="modal-btn ghost" onclick="disconnectAccount()">disconnect</button>
+        <button class="modal-btn primary" onclick="closeAccountModal()">done</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="toast"><span id="toast-msg"></span></div>
+<audio id="preview-el" style="display:none"></audio>
+
+<script src="soundtouch.js"></script>
+<script>
+/* ═══════════════════════════════════════════════
+   STATE
+═══════════════════════════════════════════════ */
+const PW = '67';
+let files   = [];
+let ratio   = 2.5;
+let quality = 192;
+let audioCtx = null;
+
+// history stored in localStorage
+function getHistory() {
+  try { return JSON.parse(localStorage.getItem('orlobx_history') || '[]'); } catch { return []; }
+}
+function saveHistory(h) {
+  localStorage.setItem('orlobx_history', JSON.stringify(h));
+}
+function addHistoryEntry(entry) {
+  const h = getHistory();
+  h.unshift({ ...entry, id: Date.now(), ts: new Date().toISOString() });
+  saveHistory(h.slice(0, 200)); // cap at 200
+  updateHistoryCount();
+}
+function getSessions() {
+  return parseInt(localStorage.getItem('orlobx_sessions') || '0');
+}
+function incSession() {
+  localStorage.setItem('orlobx_sessions', getSessions() + 1);
+}
+
+function updateHistoryCount() {
+  const h = getHistory();
+  const el = document.getElementById('history-count');
+  if (h.length > 0) { el.style.display = 'flex'; el.textContent = h.length > 99 ? '99+' : h.length; }
+  else el.style.display = 'none';
+}
+
+/* ═══════════════════════════════════════════════
+   LOCK
+═══════════════════════════════════════════════ */
+function unlock() {
+  const v = document.getElementById('pw-in').value.trim();
+  const err = document.getElementById('pw-err');
+  const inp = document.getElementById('pw-in');
+  if (v === PW) {
+    document.getElementById('lock').style.display = 'none';
+    document.getElementById('app').style.display = 'block';
+    incSession();
+    updateHistoryCount();
+    updateTopbarAccount();
+  } else {
+    inp.classList.add('bad');
+    err.textContent = 'incorrect key';
+    setTimeout(() => inp.classList.remove('bad'), 350);
+    setTimeout(() => err.textContent = '', 2500);
+    inp.value = '';
+  }
+}
+document.getElementById('pw-in').addEventListener('keydown', e => { if (e.key === 'Enter') unlock(); });
+
+/* ═══════════════════════════════════════════════
+   NAVIGATION
+═══════════════════════════════════════════════ */
+function showPage(name) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tb-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('page-' + name).classList.add('active');
+  document.getElementById('tab-' + name).classList.add('active');
+  if (name === 'profile') renderProfile();
+}
+
+/* ═══════════════════════════════════════════════
+   ACCOUNT MODAL
+═══════════════════════════════════════════════ */
+let pendingCookie = null; // cookie waiting for confirmation
+
+function openAccountModal() {
+  const overlay = document.getElementById('acct-modal');
+  overlay.classList.add('open');
+  // Show connected view if already connected
+  const acct = getAccount();
+  if (acct) {
+    showConnectedView(acct);
+  } else {
+    showInputView();
+  }
+}
+
+function closeAccountModal() {
+  document.getElementById('acct-modal').classList.remove('open');
+  pendingCookie = null;
+}
+
+// Close on backdrop click
+document.getElementById('acct-modal').addEventListener('click', e => {
+  if (e.target === document.getElementById('acct-modal')) closeAccountModal();
+});
+
+function showInputView() {
+  document.getElementById('modal-input-view').style.display = 'block';
+  document.getElementById('modal-connected-view').classList.remove('show');
+  resetModalToInput();
+}
+
+function showConnectedView(acct) {
+  document.getElementById('modal-input-view').style.display = 'none';
+  const cv = document.getElementById('modal-connected-view');
+  cv.classList.add('show');
+  document.getElementById('connected-name').textContent  = acct.displayName || acct.username;
+  document.getElementById('connected-handle').textContent = '@' + acct.username;
+  const av = document.getElementById('connected-avatar');
+  if (acct.avatarUrl) av.innerHTML = `<img src="${acct.avatarUrl}" alt="">`;
+  else av.textContent = '👤';
+}
+
+function resetModalToInput() {
+  pendingCookie = null;
+  document.getElementById('confirm-card').classList.remove('show');
+  document.getElementById('modal-btns-lookup').style.display = 'flex';
+  document.getElementById('modal-btns-confirm').style.display = 'none';
+  document.getElementById('modal-err').textContent = '';
+  document.getElementById('modal-cookie-in').value = '';
+}
+
+async function lookupCookie() {
+  const val = document.getElementById('modal-cookie-in').value.trim();
+  const errEl = document.getElementById('modal-err');
+  if (!val) { errEl.textContent = 'paste your cookie first'; return; }
+
+  // Validate it looks like a real Roblox cookie
+  if (!val.includes('_|WARNING') && val.length < 100) {
+    errEl.textContent = 'that doesn\'t look like a full roblox cookie — copy the whole value';
+    return;
+  }
+
+  errEl.textContent = '';
+  const lookupBtn = document.querySelector('#modal-btns-lookup .modal-btn.primary');
+  lookupBtn.textContent = 'looking up...';
+  lookupBtn.disabled = true;
+
+  try {
+    const res = await fetch('/api/userinfo', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ cookie: val })
+    });
+    const data = await res.json();
+
+    if (!res.ok || data.error) {
+      errEl.textContent = data.error || 'lookup failed — is your cookie still valid?';
+      return;
+    }
+
+    // Show confirmation card
+    pendingCookie = { cookie: val, ...data };
+    document.getElementById('confirm-name').textContent = data.displayName || data.username;
+    document.getElementById('confirm-user').textContent = '@' + data.username;
+    const av = document.getElementById('confirm-avatar');
+    if (data.avatarUrl) {
+      av.innerHTML = `<img src="${data.avatarUrl}" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:50%">`;
+    } else {
+      av.textContent = '👤';
+    }
+
+    document.getElementById('confirm-card').classList.add('show');
+    document.getElementById('modal-btns-lookup').style.display = 'none';
+    document.getElementById('modal-btns-confirm').style.display = 'flex';
+  } catch (e) {
+    errEl.textContent = 'network error — is your vercel function deployed?';
+  } finally {
+    lookupBtn.textContent = 'look up account →';
+    lookupBtn.disabled = false;
+  }
+}
+
+function confirmCookie() {
+  if (!pendingCookie) return;
+  // Save cookie + user info
+  localStorage.setItem('orlobx_cookie', pendingCookie.cookie);
+  localStorage.setItem('orlobx_account', JSON.stringify({
+    username:    pendingCookie.username,
+    displayName: pendingCookie.displayName,
+    userId:      pendingCookie.userId,
+    avatarUrl:   pendingCookie.avatarUrl,
+  }));
+  updateTopbarAccount();
+  showConnectedView(pendingCookie);
+  document.getElementById('btn-upload').classList.add('has-account');
+  toast(`connected as ${pendingCookie.displayName || pendingCookie.username}`, 'ok');
+}
+
+function disconnectAccount() {
+  localStorage.removeItem('orlobx_cookie');
+  localStorage.removeItem('orlobx_account');
+  pendingCookie = null;
+  updateTopbarAccount();
+  document.getElementById('btn-upload').classList.remove('has-account');
+  closeAccountModal();
+  toast('account disconnected', 'inf');
+}
+
+function getAccount() {
+  try { return JSON.parse(localStorage.getItem('orlobx_account') || 'null'); } catch { return null; }
+}
+
+function getCookie() { return localStorage.getItem('orlobx_cookie') || ''; }
+
+function updateTopbarAccount() {
+  const acct = getAccount();
+  const btn   = document.getElementById('tb-acct-btn');
+  const label = document.getElementById('tb-acct-label');
+  const av    = document.getElementById('tb-acct-avatar');
+  if (acct) {
+    btn.classList.add('connected');
+    label.textContent = acct.displayName || acct.username;
+    if (acct.avatarUrl) av.innerHTML = `<img src="${acct.avatarUrl}" alt="">`;
+    else av.textContent = '👤';
+    document.getElementById('btn-upload').classList.add('has-account');
+  } else {
+    btn.classList.remove('connected');
+    label.textContent = 'connect account';
+    av.textContent = '👤';
+    document.getElementById('btn-upload').classList.remove('has-account');
+  }
+}
+
+/* ═══════════════════════════════════════════════
+   UPLOAD / FILE HANDLING
+═══════════════════════════════════════════════ */
+const dz = document.getElementById('dz');
+const fi = document.getElementById('file-in');
+
+dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('over'); });
+dz.addEventListener('dragleave', () => dz.classList.remove('over'));
+dz.addEventListener('drop', e => {
+  e.preventDefault(); dz.classList.remove('over');
+  addFiles([...e.dataTransfer.files].filter(f => /\.(mp3|wav|ogg|flac|aac|m4a)$/i.test(f.name)));
+});
+fi.addEventListener('change', () => { addFiles([...fi.files]); fi.value = ''; });
+
+function addFiles(nf) {
+  nf.forEach(f => {
+    if (!files.find(x => x.name === f.name && x.size === f.size))
+      files.push({ file: f, name: f.name, size: f.size, status: 'idle', blob: null, url: null, assetId: null });
+  });
+  renderFiles();
+  document.getElementById('btn-prev').disabled = files.length === 0;
+  document.getElementById('btn-dl').disabled = true;
+}
+
+function renderFiles() {
+  const l = document.getElementById('file-list');
+  if (!files.length) { l.innerHTML = ''; return; }
+  l.innerHTML = files.map((f, i) => `
+    <div class="frow" id="frow-${i}">
+      <div class="frow-icon">🎵</div>
+      <div class="frow-info">
+        <div class="frow-name">${esc(f.name)}</div>
+        <div class="frow-meta">
+          <span>${fmtSz(f.size)}</span>
+          <span>${ext(f.name).toUpperCase()}</span>
+          ${f.assetId ? `<span>id: ${f.assetId}</span>` : ''}
+        </div>
+      </div>
+      <div class="frow-bar"><div class="frow-bar-fill" id="fbar-${i}" style="width:${f.status==='done'||f.status==='uploaded'?'100':'0'}%"></div></div>
+      <div class="frow-badge ${f.status}" id="fbadge-${i}">${f.status}</div>
+      <button class="frow-dl" id="fdl-${i}" ${f.blob ? '' : 'disabled'} onclick="dlSingle(${i})" title="download">↓</button>
+      <button class="frow-rm" onclick="rmFile(${i})" title="remove">✕</button>
+    </div>`).join('');
+}
+
+function updateFileRow(i) {
+  const f = files[i];
+  const badge = document.getElementById(`fbadge-${i}`);
+  const bar   = document.getElementById(`fbar-${i}`);
+  const dlBtn = document.getElementById(`fdl-${i}`);
+  if (badge) { badge.className = `frow-badge ${f.status}`; badge.textContent = f.status; }
+  if (bar && (f.status === 'done' || f.status === 'uploaded')) bar.style.width = '100%';
+  if (dlBtn) dlBtn.disabled = !f.blob;
+  // update meta row to show asset id if present
+  const meta = document.querySelector(`#frow-${i} .frow-meta`);
+  if (meta && f.assetId) {
+    const existing = meta.querySelector('.asset-id-span');
+    if (!existing) {
+      const sp = document.createElement('span');
+      sp.className = 'asset-id-span';
+      sp.textContent = `id: ${f.assetId}`;
+      meta.appendChild(sp);
+    }
+  }
+}
+
+function rmFile(i) { files.splice(i, 1); renderFiles(); }
+function esc(s) { return s.replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function fmtSz(b) { return b < 1048576 ? (b/1024).toFixed(1)+'KB' : (b/1048576).toFixed(2)+'MB'; }
+function ext(n) { return n.split('.').pop() || 'wav'; }
+function fmtDate(iso) {
+  const d = new Date(iso);
+  return d.toLocaleDateString(undefined, { month:'short', day:'numeric', year:'numeric' });
+}
+
+/* ═══════════════════════════════════════════════
+   SETTINGS
+═══════════════════════════════════════════════ */
+function setRatio(btn) {
+  document.querySelectorAll('.seg-btn[data-r]').forEach(b => b.classList.remove('on'));
+  btn.classList.add('on'); ratio = parseFloat(btn.dataset.r);
+}
+function setQ(btn) {
+  document.querySelectorAll('.seg-btn[data-q]').forEach(b => b.classList.remove('on'));
+  btn.classList.add('on'); quality = parseInt(btn.dataset.q);
+}
+function isOn(id) { return document.getElementById(id).classList.contains('on'); }
+
+/* ═══════════════════════════════════════════════
+   AUDIO PROCESSING — SoundTouch WSOLA engine
+   
+   What we do:
+   1. Decode audio at full quality
+   2. Mix to mono (optional)
+   3. Use SoundTouch to INDEPENDENTLY:
+      - Pitch UP by ratio (WSOLA phase vocoder, no artifacts)
+      - Speed UP by ratio (tempo change, duration compressed)
+      This means when Roblox slows it by ratio, pitch & speed
+      both cancel out perfectly → sounds exactly like original
+   4. Apply +10 dB boost (matches what your .rbxm was doing)
+   5. Normalize to prevent clipping
+   6. Encode as 44.1kHz 16-bit WAV (highest quality Roblox accepts)
+═══════════════════════════════════════════════ */
+function getCtx() {
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  return audioCtx;
+}
+
+// Run SoundTouch: feed ALL input at once, drain output, done.
+// No chunking loop — much faster.
+function runSoundTouch(st, leftCh, rightCh, totalFrames) {
+  // Interleave all input at once
+  const interleaved = new Float32Array(totalFrames * 2);
+  for (let i = 0; i < totalFrames; i++) {
+    interleaved[i * 2]     = leftCh[i];
+    interleaved[i * 2 + 1] = rightCh[i];
+  }
+  st.inputBuffer.putSamples(interleaved, 0, totalFrames);
+
+  // Flush with silence to push remaining frames out
+  const flush = new Float32Array(8192 * 2);
+  for (let k = 0; k < 8; k++) {
+    st.inputBuffer.putSamples(flush, 0, 8192);
+    st.process();
+  }
+  st.process();
+
+  // Drain all output
+  const available = st.outputBuffer.frameCount;
+  const out = new Float32Array(available * 2);
+  st.outputBuffer.receiveSamples(out, available);
+  return out;
+}
+
+async function processAudio(fileObj, onProg) {
+  const ctx = getCtx();
+  const buf = await fileObj.file.arrayBuffer();
+  onProg(10, 'decoding...');
+
+  let decoded;
+  try { decoded = await ctx.decodeAudioData(buf); }
+  catch (e) { throw new Error('could not decode — try .wav or .mp3'); }
+
+  const doSP    = isOn('t-sp');
+  const doBoost = isOn('t-boost');
+  const doMono  = isOn('t-mono');
+  const doNorm  = isOn('t-norm');
+
+  const inCh       = decoded.numberOfChannels;
+  const sRate      = decoded.sampleRate;
+  const totalFrames = decoded.length;
+
+  let leftCh  = decoded.getChannelData(0);
+  let rightCh = inCh > 1 ? decoded.getChannelData(1) : decoded.getChannelData(0);
+
+  let outLeft, outRight;
+
+  if (doSP) {
+    onProg(20, 'applying pitch & speed...');
+
+    // Use OfflineAudioContext with playbackRate for speed+pitch together.
+    // This is near-instant (runs off the audio thread) and sounds great
+    // because when Roblox slows it back down by the same ratio,
+    // both speed and pitch cancel perfectly.
+    const outLen = Math.ceil(totalFrames / ratio);
+    const numChST = 2; // always stereo into offline ctx
+    const offCtx = new OfflineAudioContext(numChST, outLen, sRate);
+
+    const srcBuf = offCtx.createBuffer(numChST, totalFrames, sRate);
+    srcBuf.copyToChannel(leftCh,  0);
+    srcBuf.copyToChannel(rightCh, 1);
+
+    const src = offCtx.createBufferSource();
+    src.buffer = srcBuf;
+    src.playbackRate.value = ratio;
+    src.connect(offCtx.destination);
+    src.start(0);
+
+    onProg(40, 'rendering...');
+    const rendered = await offCtx.startRendering();
+    outLeft  = rendered.getChannelData(0).slice();
+    outRight = rendered.getChannelData(1).slice();
+    onProg(75, 'rendered');
+  } else {
+    outLeft  = leftCh.slice();
+    outRight = rightCh.slice();
+    onProg(75, 'skipping pitch shift');
+  }
+
+  onProg(80, 'applying gain...');
+
+  // Collapse to mono AFTER pitch processing if needed
+  let outData;
+  if (doMono) {
+    const mono = new Float32Array(outLeft.length);
+    for (let i = 0; i < outLeft.length; i++) mono[i] = (outLeft[i] + outRight[i]) * 0.5;
+    outData = [mono];
+  } else {
+    outData = [outLeft, outRight];
+  }
+
+  // +10 dB boost = linear gain of 10^(10/20) ≈ 3.162
+  // Matches your .rbxm HighGain/LowGain/MidGain = 10.0 dB
+  const boostGain = doBoost ? Math.pow(10, 10 / 20) : 1.0;
+
+  // Find peak BEFORE applying gain so we can normalize intelligently
+  let peak = 0;
+  for (let c = 0; c < outData.length; c++)
+    for (let i = 0; i < outData[c].length; i++)
+      peak = Math.max(peak, Math.abs(outData[c][i]));
+
+  // If normalizing: scale so (peak * boost) hits -0.5 dB (≈ 0.944)
+  // If not normalizing: just apply boost, clamp at ±1
+  let finalGain;
+  if (doNorm && peak > 0) {
+    finalGain = (0.944 / peak) * boostGain;
+    // Cap at boostGain * 4 to avoid extreme amplification of very quiet files
+    finalGain = Math.min(finalGain, boostGain * 4);
+  } else {
+    finalGain = boostGain;
+  }
+
+  for (let c = 0; c < outData.length; c++)
+    for (let i = 0; i < outData[c].length; i++)
+      outData[c][i] = Math.max(-1, Math.min(1, outData[c][i] * finalGain));
+
+  onProg(90, 'encoding wav...');
+
+  // Encode at 44100 Hz (highest quality Roblox supports)
+  // Resample if source was different sample rate
+  let finalData = outData;
+  let finalRate = sRate;
+
+  // If source isn't 44100, resample via OfflineAudioContext
+  if (sRate !== 44100) {
+    onProg(92, 'resampling to 44.1kHz...');
+    const outLen44 = Math.round(outData[0].length * 44100 / sRate);
+    const offCtx = new OfflineAudioContext(outData.length, outLen44, 44100);
+    const srcBuf = offCtx.createBuffer(outData.length, outData[0].length, sRate);
+    for (let c = 0; c < outData.length; c++) srcBuf.copyToChannel(outData[c], c);
+    const src = offCtx.createBufferSource();
+    src.buffer = srcBuf;
+    src.connect(offCtx.destination);
+    src.start(0);
+    const resampled = await offCtx.startRendering();
+    finalData = [];
+    for (let c = 0; c < resampled.numberOfChannels; c++)
+      finalData.push(resampled.getChannelData(c).slice());
+    finalRate = 44100;
+  }
+
+  const blob = encodeWAV(finalData, finalRate, finalData.length);
+  onProg(100, 'done');
+  return blob;
+}
+
+function encodeWAV(channels, sampleRate, numCh) {
+  // 24-bit PCM WAV — 50% more dynamic range than 16-bit, no audible quantization noise
+  // Roblox accepts 24-bit WAV fine
+  const BIT_DEPTH  = 24;
+  const BYTES_PER_SAMPLE = BIT_DEPTH / 8; // 3
+  const len = channels[0].length;
+  const dataBytes = len * numCh * BYTES_PER_SAMPLE;
+  const buf = new ArrayBuffer(44 + dataBytes);
+  const v   = new DataView(buf);
+
+  const ws = (o, s) => { for (let i = 0; i < s.length; i++) v.setUint8(o + i, s.charCodeAt(i)); };
+  const w4 = (o, n) => v.setUint32(o, n, true);
+  const w2 = (o, n) => v.setUint16(o, n, true);
+
+  ws(0,'RIFF'); w4(4, 36 + dataBytes); ws(8,'WAVE');
+  ws(12,'fmt '); w4(16,16); w2(20,1); w2(22, numCh);
+  w4(24, sampleRate);
+  w4(28, sampleRate * numCh * BYTES_PER_SAMPLE);
+  w2(32, numCh * BYTES_PER_SAMPLE);
+  w2(34, BIT_DEPTH);
+  ws(36,'data'); w4(40, dataBytes);
+
+  // Write 24-bit samples (little-endian, interleaved)
+  const MAX24 = 0x7FFFFF;
+  let offset = 44;
+  for (let i = 0; i < len; i++) {
+    for (let c = 0; c < numCh; c++) {
+      const s = Math.max(-1, Math.min(1, channels[c][i] || 0));
+      const val = s < 0 ? Math.round(s * (MAX24 + 1)) : Math.round(s * MAX24);
+      // Write 3 bytes little-endian
+      v.setUint8(offset,     val & 0xFF);
+      v.setUint8(offset + 1, (val >> 8) & 0xFF);
+      v.setUint8(offset + 2, (val >> 16) & 0xFF);
+      offset += 3;
+    }
+  }
+  return new Blob([buf], { type: 'audio/wav' });
+}
+
+/* ═══════════════════════════════════════════════
+   ROBLOX UPLOAD
+═══════════════════════════════════════════════ */
+async function uploadToRoblox(blob, fileName) {
+  const cookie = getCookie();
+  if (!cookie) return null;
+
+  const form = new FormData();
+  form.append('cookie', cookie);
+  form.append('audio', blob, fileName);
+  form.append('fileName', fileName);
+  form.append('description', 'orlobx bypasser');
+
+  const res = await fetch('/api/upload', { method: 'POST', body: form });
+  const data = await res.json();
+  if (!res.ok || data.error) throw new Error(data.error || 'upload failed');
+  return String(data.assetId);
+}
+
+/* ═══════════════════════════════════════════════
+   RUN
+═══════════════════════════════════════════════ */
+async function runAll() {
+  if (!files.length) { toast('add files first', 'err'); return; }
+
+  setEngine('processing...');
+  document.getElementById('gp').style.display = 'block';
+  document.getElementById('btn-run').disabled    = true;
+  document.getElementById('btn-dl').disabled     = true;
+  document.getElementById('btn-upload').disabled = true;
+
+  for (let i = 0; i < files.length; i++) {
+    const f = files[i];
+    f.status = 'proc';
+    updateFileRow(i);
+
+    try {
+      const blob = await processAudio(f, (pct, lbl) => {
+        const overall = Math.round((i / files.length * 100) + (pct / files.length));
+        setGP(overall, `[${i+1}/${files.length}] ${f.name} — ${lbl}`);
+        document.getElementById(`fbar-${i}`).style.width = pct + '%';
+      });
+
+      f.blob   = blob;
+      f.url    = URL.createObjectURL(blob);
+      f.status = 'done';
+      addHistoryEntry({ name: f.name, size: f.size, ratio, assetId: null });
+    } catch (e) {
+      f.status = 'error';
+      toast(`error on ${f.name}: ${e.message}`, 'err');
+      console.error(e);
+    }
+
+    updateFileRow(i);
+  }
+
+  setGP(100, 'complete');
+  document.getElementById('btn-run').disabled    = false;
+  document.getElementById('btn-dl').disabled     = false;
+  document.getElementById('btn-prev').disabled   = false;
+  document.getElementById('btn-upload').disabled = false;
+  setEngine('ready');
+
+  const ok = files.filter(f => f.status === 'done').length;
+  toast(`${ok} file${ok > 1 ? 's' : ''} processed — ready to download or upload`, 'ok');
+  setTimeout(() => document.getElementById('gp').style.display = 'none', 3500);
+}
+
+/* ═══════════════════════════════════════════════
+   UPLOAD TO ROBLOX (separate button)
+═══════════════════════════════════════════════ */
+async function uploadAll() {
+  if (!getCookie()) {
+    toast('connect your roblox account first', 'err');
+    openAccountModal();
+    return;
+  }
+
+  const ready = files.filter(f => f.blob && f.status !== 'uploaded');
+  if (!ready.length) { toast('process files first', 'err'); return; }
+
+  document.getElementById('btn-upload').disabled = true;
+  document.getElementById('gp').style.display = 'block';
+  setEngine('uploading...');
+
+  let successCount = 0;
+  for (let i = 0; i < ready.length; i++) {
+    const f = ready[i];
+    const fi = files.indexOf(f);
+    f.status = 'proc';
+    updateFileRow(fi);
+    setGP(
+      Math.round(i / ready.length * 100),
+      `[${i+1}/${ready.length}] uploading ${f.name}...`
+    );
+
+    try {
+      const outName = f.name.replace(/\.[^.]+$/, '') + '_bypassed.wav';
+      const assetId = await uploadToRoblox(f.blob, outName);
+      f.assetId = assetId;
+      f.status  = 'uploaded';
+      successCount++;
+      // Update history entry with asset id
+      const h = getHistory();
+      const entry = h.find(e => e.name === f.name && !e.assetId);
+      if (entry) { entry.assetId = assetId; saveHistory(h); }
+      addHistoryEntry({ name: f.name, outName, assetId, size: f.size, ratio });
+      toast(`uploaded — id: ${assetId}`, 'ok');
+    } catch (e) {
+      f.status = 'done';
+      toast(`upload failed: ${e.message}`, 'err');
+    }
+
+    updateFileRow(fi);
+  }
+
+  setGP(100, 'done');
+  setEngine('ready');
+  document.getElementById('btn-upload').disabled = false;
+  toast(`${successCount} file${successCount > 1 ? 's' : ''} uploaded to roblox`, 'ok');
+  setTimeout(() => document.getElementById('gp').style.display = 'none', 3500);
+}
+
+async function uploadToRoblox(blob, fileName) {
+  const cookie = getCookie();
+  if (!cookie) throw new Error('no cookie');
+  const form = new FormData();
+  form.append('cookie', cookie);
+  form.append('audio', blob, fileName);
+  form.append('fileName', fileName);
+  form.append('description', 'orlobx bypasser');
+  const res  = await fetch('/api/upload', { method: 'POST', body: form });
+  const data = await res.json();
+  if (!res.ok || data.error) throw new Error(data.error || 'upload failed');
+  return String(data.assetId);
+}
+
+function setGP(pct, label) {
+  document.getElementById('gp-fill').style.width  = pct + '%';
+  document.getElementById('gp-pct').textContent   = pct + '%';
+  document.getElementById('gp-label').textContent = label;
+}
+
+function setEngine(s) {
+  const el = document.getElementById('engine-status');
+  el.textContent = s;
+  el.className = 'tb-status' + (s === 'ready' ? ' ok' : '');
+}
+
+/* ═══════════════════════════════════════════════
+   DOWNLOAD / PREVIEW
+═══════════════════════════════════════════════ */
+function dlSingle(i) {
+  const f = files[i];
+  if (!f.blob) return;
+  const a = document.createElement('a');
+  a.href = f.url;
+  a.download = f.name.replace(/\.[^.]+$/, '') + '_bypassed.wav';
+  a.click();
+}
+
+function dlAll() {
+  const done = files.filter(f => f.blob);
+  if (!done.length) { toast('process files first', 'err'); return; }
+  done.forEach((f, i) => setTimeout(() => dlSingle(files.indexOf(f)), i * 150));
+  toast(`downloading ${done.length} file${done.length > 1 ? 's' : ''}`, 'inf');
+}
+
+function previewFirst() {
+  if (!files.length) return;
+  const f = files[0];
+  const src = f.url || URL.createObjectURL(f.file);
+  const el = document.getElementById('preview-el');
+  el.src = src; el.currentTime = 0; el.play();
+  setTimeout(() => { el.pause(); el.currentTime = 0; }, 5000);
+  toast('playing 5s preview', 'inf');
+}
+
+/* ═══════════════════════════════════════════════
+   PROFILE PAGE
+═══════════════════════════════════════════════ */
+function renderProfile() {
+  const history  = getHistory();
+  const uploaded = history.filter(h => h.assetId).length;
+  const acct     = getAccount();
+
+  document.getElementById('stat-total').textContent    = history.length;
+  document.getElementById('stat-uploaded').textContent = uploaded;
+  document.getElementById('stat-sessions').textContent = getSessions();
+  document.getElementById('profile-meta').textContent  =
+    acct ? `@${acct.username}` : (history.length ? `last bypass: ${fmtDate(history[0].ts)}` : 'no bypasses yet');
+
+  const list = document.getElementById('history-list');
+  if (!history.length) {
+    list.innerHTML = `<div class="empty-state">
+      <div class="empty-icon">🎵</div>
+      <div class="empty-label">no bypasses yet</div>
+    </div>`;
+    return;
+  }
+
+  list.innerHTML = history.map((h, i) => `
+    <div class="hist-item">
+      <div class="hist-icon">🎵</div>
+      <div class="hist-info">
+        <div class="hist-name">${esc(h.name)}</div>
+        <div class="hist-meta">
+          <span>${fmtDate(h.ts)}</span>
+          <span>×${h.ratio}</span>
+          <span>${fmtSz(h.size)}</span>
+        </div>
+      </div>
+      ${h.assetId
+        ? `<div class="hist-id" onclick="copyId('${h.assetId}')" title="click to copy">rbx:${h.assetId}</div>`
+        : `<div class="hist-id" style="opacity:.3">no id</div>`
+      }
+    </div>`).join('');
+}
+
+function copyId(id) {
+  navigator.clipboard.writeText(id).then(() => toast(`copied: ${id}`, 'ok'));
+}
+
+/* ═══════════════════════════════════════════════
+   TOAST
+═══════════════════════════════════════════════ */
+function toast(msg, type = 'inf') {
+  const t = document.getElementById('toast');
+  document.getElementById('toast-msg').textContent = msg;
+  t.className = `${type} show`;
+  clearTimeout(t._t);
+  t._t = setTimeout(() => t.classList.remove('show'), 3000);
+}
+</script>
+</body>
+</html>
