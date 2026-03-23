@@ -1,8 +1,0 @@
-{
-  "version": 2,
-  "routes": [
-    { "src": "/api/(.*)", "dest": "/api/$1" },
-    { "src": "/soundtouch.js", "dest": "/public/soundtouch.js" },
-    { "src": "/(.*)", "dest": "/public/index.html" }
-  ]
-}
