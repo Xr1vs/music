@@ -1,0 +1,12 @@
+{
+  "version": 2,
+  "functions": {
+    "api/userinfo.js": { "runtime": "nodejs20.x" },
+    "api/upload.js":   { "runtime": "nodejs20.x" }
+  },
+  "routes": [
+    { "src": "/api/(.*)", "dest": "/api/$1" },
+    { "src": "/soundtouch.js", "dest": "/soundtouch.js" },
+    { "src": "/(.*)", "dest": "/index.html" }
+  ]
+}
